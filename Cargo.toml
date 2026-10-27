@@ -1,0 +1,13 @@
+[package]
+name = "rust_tpp_compiler"
+version = "0.1.0"
+edition = "2021"
+description = "Compilador para a linguagem TPP em Rust"
+
+[[bin]]
+name = "tpp_compiler"
+path = "src/main.rs"
+
+[lib]
+name = "rust_tpp_compiler"
+path = "src/lib.rs"
