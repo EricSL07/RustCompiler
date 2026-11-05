@@ -44,7 +44,7 @@ A linguagem **TPP** é uma linguagem imperativa didática cuja sintaxe utiliza p
 Além dos símbolos estáticos da Tabela 1, a especificação léxica define padrões dinâmicos por meio de Expressões Regulares (ER):
 
 - **Identificadores (`ID`):** Começam obrigatoriamente por uma letra (ASCII ou acentuada do português) seguida por zero ou mais letras, dígitos ou sublinhado (`_`):
-  $$\text{letra} = \text{[a-zA-ZáÁãÃàÀéÉíÍóÓõÕ]}$$
+  $$\text{letra} = \text{[a-zA-ZáÁãâÂÃàÀéÉíÍóÓõÕÚú]}$$
   $$\text{digito} = \text{[0-9]}$$
   $$\text{ID} = \text{letra}(\text{letra} \mid \text{digito} \mid \text{\_})^*$$
 - **Números Inteiros (`NUM_INTEIRO`):** Sequência de um ou mais dígitos decimais:
