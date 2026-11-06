@@ -146,7 +146,7 @@ flowchart TD
 
 ### 4.1. Definição Declarativa dos Tokens com `#[derive(Logos)]`
 
-No arquivo [`src/tpplexer/tokens.rs`](file:///home/seles/Documentos/projetos/RustCompiler/src/tpplexer/tokens.rs), o enum `TokenKind` utiliza a macro procedural `#[derive(Logos)]` para declarar todas as palavras reservadas, operadores e expressões regulares da linguagem TPP:
+No arquivo [`src/tpplexer/tokens.rs`], o enum `TokenKind` utiliza a macro procedural `#[derive(Logos)]` para declarar todas as palavras reservadas, operadores e expressões regulares da linguagem TPP:
 
 ```rust
 use logos::Logos;
@@ -233,7 +233,7 @@ pub enum TokenKind {
 
 ### 4.2. O Analisador `LogosLexer` e Controle de Linha/Coluna
 
-No arquivo [`src/tpplexer/logos_lexer.rs`](file:///home/seles/Documentos/projetos/RustCompiler/src/tpplexer/logos_lexer.rs), a estrutura `LogosLexer` implementa a trait `BaseLexer`, gerenciando o cursor sobre o código-fonte UTF-8, contabilizando quebras de linha tanto fora quanto dentro de comentários multilinha `{ ... }` e calculando a coluna exata em caracteres Unicode:
+No arquivo [`src/tpplexer/logos_lexer.rs`], a estrutura `LogosLexer` implementa a trait `BaseLexer`, gerenciando o cursor sobre o código-fonte UTF-8, contabilizando quebras de linha tanto fora quanto dentro de comentários multilinha `{ ... }` e calculando a coluna exata em caracteres Unicode:
 
 ```rust
 pub fn get_column_str(source: &str, line_start_byte: usize, token_start_byte: usize) -> usize {
@@ -247,7 +247,7 @@ Quando o `TokenKind::CommentStart` (`{`) é reconhecido pelo `logos`, o `LogosLe
 
 ### 4.3. Tratamento e Formatação de Erros (`MyError`)
 
-O módulo [`src/myerror.rs`](file:///home/seles/Documentos/projetos/RustCompiler/src/myerror.rs) lê os arquivos `.properties` (`GlobalErrorMessages.properties` e `LexerErrorMessages.properties`) e suporta dois modos de operação:
+O módulo [`src/myerror.rs`] lê os arquivos `.properties` (`GlobalErrorMessages.properties` e `LexerErrorMessages.properties`) e suporta dois modos de operação:
 - **Modo Normal (para o desenvolvedor):** Imprime a localização exata e a descrição detalhada, por exemplo:  
   `Erro[2][1]: Caracter inválido. valor: ç`
 - **Modo de Teste Automatizado (`-k`):** Imprime exclusivamente a chave padronizada do erro (`ERR-LEX-INV-CHAR`, `ERR-LEX-UNC-COMMENT`, `ERR-GLOB-USE`, `ERR-GLOB-NOT-TPP`, `ERR-GLOB-FILE-NOT-EXISTS`), permitindo a verificação automatizada independente de formatação textual.
@@ -332,11 +332,11 @@ ERR-LEX-UNC-COMMENT
 
 ## 6. Validação Experimental
 
-A validação funcional foi conduzida utilizando os **42 casos de teste do professor** na suíte de testes de integração do Rust ([`tests/tpplex_test.rs`](file:///home/seles/Documentos/projetos/RustCompiler/tests/tpplex_test.rs)), composta por:
+A validação funcional foi conduzida utilizando os **42 casos de teste do professor** na suíte de testes de integração do Rust ([`tests/tpplex_test.rs`]), composta por:
 - **3 casos de validação global de entrada:** argumento vazio (`ERR-GLOB-USE`), arquivo com extensão inválida `teste.c` (`ERR-GLOB-NOT-TPP`) e arquivo inexistente `notexist.tpp` (`ERR-GLOB-FILE-NOT-EXISTS`);
 - **39 programas de teste em TPP (`lex-test-001.tpp` a `lex-test-039.tpp`):** cobrindo declarações de variáveis, estruturas condicionais (`se`/`então`/`senão`), laços (`repita`/`até`), expressões científicas, algoritmos completos (como ordenação e cálculo numérico), comentários multilinha, comentários não fechados e caracteres inválidos intercalados.
 
-O analisador `LogosLexer` obtém **100% de aprovação (42/42 testes aprovados)** em conformidade estrita com os arquivos `.lex.out` de referência, além de ser validado pelo teste de estresse ([`tests/test_perf_large_tokens.rs`](file:///home/seles/Documentos/projetos/RustCompiler/tests/test_perf_large_tokens.rs)) com mais de **36.500 tokens**.
+O analisador `LogosLexer` obtém **100% de aprovação (42/42 testes aprovados)** em conformidade estrita com os arquivos `.lex.out` de referência, além de ser validado pelo teste de estresse ([`tests/test_perf_large_tokens.rs`]) com mais de **36.500 tokens**.
 
 ---
 
