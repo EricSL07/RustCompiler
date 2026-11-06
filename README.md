@@ -1,29 +1,27 @@
 # RustCompiler — Compilador TPP em Rust
 
-Esqueleto completo do compilador para a linguagem **TPP** implementado em **Rust**, estruturado com base na arquitetura modular de referência (`tppcompiler`) e contendo a **1ª Fase (Análise Léxica)** completa e integrada com os **42 casos de teste do professor**.
+Esqueleto completo do compilador para a linguagem **TPP** implementado em **Rust**, contendo a **1ª Fase (Análise Léxica)** construída com o crate **`logos`** (padrão do ecossistema Rust para geração de analisadores léxicos em tempo de compilação) e integrada com os **42 casos de teste do professor**.
 
 ## Estrutura do Projeto
 
 ```text
 RustCompiler/
-├── Artigo.md                               # Artigo sobre a construção do compilador em Rust
-├── Cargo.toml                              # Manifesto do projeto Cargo
+├── Parte 1/
+│   └── Artigo.md                           # Artigo sobre a construção do analisador léxico em Rust com Logos
+├── Cargo.toml                              # Manifesto do projeto Cargo (dependência: logos)
 ├── README.md                               # Documentação do projeto
 ├── src/
 │   ├── main.rs                             # Ponto de entrada da CLI (tpp_compiler)
 │   ├── lib.rs                              # Biblioteca principal exportando os módulos
 │   ├── myerror.rs                          # Gerenciador de erros e leitura dos .properties
 │   ├── GlobalErrorMessages.properties      # Mensagens de erro globais
-│   ├── tpplexer/                           # Fase 1: Análise Léxica
+│   ├── tpplexer/                           # Fase 1: Análise Léxica (baseada em Logos)
 │   │   ├── mod.rs                          # Factory get_lexer e exportações
 │   │   ├── base.rs                         # Trait BaseLexer, struct Token e utilitários
-│   │   ├── tokens.rs                       # Definições de Tokens, palavras reservadas e operadores
+│   │   ├── tokens.rs                       # Enum TokenKind com #[derive(Logos)] e regras léxicas
+│   │   ├── logos_lexer.rs                  # Implementação do LogosLexer (rastreamento de linha/coluna e erros)
 │   │   ├── log_error_lexer.rs              # Tratamento e formatação de erros léxicos
-│   │   ├── LexerErrorMessages.properties   # Mensagens de erro léxicas
-│   │   ├── ply_lexer.rs                    # Estratégia padrão compatível com PLY (--lexer ply)
-│   │   ├── mandfa_lexer.rs                 # Estratégia AFD manual procedural (--lexer mandfa)
-│   │   ├── symtable_lexer.rs               # Estratégias com Tabela de Símbolos (--lexer symtable / symtableman)
-│   │   └── automatalib_lexer.rs            # Estratégias com AFDs formais e Maximal Munch (--lexer automatalib / automatalibman)
+│   │   └── LexerErrorMessages.properties   # Mensagens de erro léxicas
 │   ├── tppparser/                          # Fase 2: Análise Sintática (Esqueleto)
 │   │   ├── mod.rs                          # Trait BaseParser e SyntaxTree
 │   │   └── ParserMessages.properties       # Mensagens de erro sintáticas
@@ -33,7 +31,7 @@ RustCompiler/
 │       └── mod.rs                          # Esqueleto do CodeGenerator
 └── tests/
     ├── tpplex_test.rs                      # Suíte automatizada com os 42 testes do professor
-    ├── test_perf_large_tokens.rs           # Testes de performance e paridade (>36.000 tokens)
+    ├── test_perf_large_tokens.rs           # Teste de performance (>36.000 tokens)
     └── lex-tests/                          # Os 39 arquivos .tpp e 42 saídas esperadas (.lex.out)
 ```
 
@@ -50,17 +48,12 @@ cargo run -- --help
 cargo run -- tests/lex-tests/lex-test-002.tpp
 
 # Execução com flag -k (imprime apenas as chaves de erro, ex.: ERR-LEX-INV-CHAR):
-cargo run -- --lexer ply -k tests/lex-tests/lex-test-002.tpp
-
-# Escolhendo a estratégia léxica (ply, mandfa, symtable, symtableman, automatalib, automatalibman):
-cargo run -- --lexer mandfa tests/lex-tests/lex-test-001.tpp
-cargo run -- --lexer symtable tests/lex-tests/lex-test-001.tpp
-cargo run -- --lexer automatalib tests/lex-tests/lex-test-001.tpp
+cargo run -- -k tests/lex-tests/lex-test-002.tpp
 ```
 
 ## Como Executar os Testes do Professor
 
-Para rodar toda a suíte de testes (os 42 testes do professor + validação de todas as estratégias + teste de stress/performance):
+Para rodar toda a suíte de testes (os 42 testes do professor + teste de stress/performance):
 
 ```bash
 cargo test
@@ -72,7 +65,7 @@ Para executar apenas a suíte de testes léxicos do professor (`tpplex_test`):
 cargo test --test tpplex_test
 ```
 
-Para executar os testes de performance mostrando a vazão em tokens/s no terminal:
+Para executar o teste de performance mostrando a vazão em tokens/s no terminal:
 
 ```bash
 cargo test --test test_perf_large_tokens -- --nocapture

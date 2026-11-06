@@ -11,3 +11,7 @@ path = "src/main.rs"
 [lib]
 name = "rust_tpp_compiler"
 path = "src/lib.rs"
+
+[dependencies]
+logos = "0.14"
+

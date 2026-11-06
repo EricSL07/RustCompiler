@@ -1,6 +1,6 @@
 use std::time::Instant;
 
-use rust_tpp_compiler::tpplexer::{get_lexer, ALL_STRATEGIES};
+use rust_tpp_compiler::tpplexer::{BaseLexer, LogosLexer};
 
 const BENCHMARK_BLOCKS: usize = 500;
 
@@ -36,45 +36,29 @@ fn generate_large_tpp_code(num_blocks: usize) -> String {
 }
 
 #[test]
-fn test_large_token_sequence_performance_and_conformance() {
+fn test_large_token_sequence_performance() {
     let code = generate_large_tpp_code(BENCHMARK_BLOCKS);
 
-    let mut ref_lexer = get_lexer("ply", true).unwrap();
-    let baseline_tokens: Vec<String> = ref_lexer
+    let mut lexer = LogosLexer::new(true);
+    let start = Instant::now();
+    let tokens: Vec<String> = lexer
         .tokenize(&code)
         .into_iter()
         .map(|t| t.token_type)
         .collect();
+    let elapsed = start.elapsed().as_secs_f64();
+    let throughput = tokens.len() as f64 / elapsed.max(1e-9);
 
-    assert!(
-        baseline_tokens.len() > 30_000,
-        "Esperados >30.000 tokens, obtidos {}",
-        baseline_tokens.len()
+    println!(
+        "[PERFORMANCE] Lexer: logos | Tokens: {} | Tempo: {:.4}s | Vazão: {:.0} tok/s",
+        tokens.len(),
+        elapsed,
+        throughput
     );
 
-    for &strategy in ALL_STRATEGIES {
-        let mut lexer = get_lexer(strategy, true).unwrap();
-        let start = Instant::now();
-        let tokens: Vec<String> = lexer
-            .tokenize(&code)
-            .into_iter()
-            .map(|t| t.token_type)
-            .collect();
-        let elapsed = start.elapsed().as_secs_f64();
-        let throughput = tokens.len() as f64 / elapsed.max(1e-9);
-
-        println!(
-            "[PERFORMANCE] Lexer: {:<15} | Tokens: {} | Tempo: {:.4}s | Vazão: {:.0} tok/s",
-            strategy,
-            tokens.len(),
-            elapsed,
-            throughput
-        );
-
-        assert_eq!(
-            tokens, baseline_tokens,
-            "Divergência na sequência de tokens para a estratégia '{}'",
-            strategy
-        );
-    }
+    assert!(
+        tokens.len() > 30_000,
+        "Esperados >30.000 tokens, obtidos {}",
+        tokens.len()
+    );
 }

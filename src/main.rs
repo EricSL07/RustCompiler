@@ -16,7 +16,7 @@ fn print_help() {
     println!();
     println!("Opções:");
     println!("  -h, --help            Exibe esta mensagem de ajuda e sai");
-    println!("  --lexer <ESTRATÉGIA>  Estratégia Léxica: ply, mandfa, symtable, symtableman, automatalib, automatalibman (padrão: ply)");
+    println!("  --lexer <ESTRATÉGIA>  Estratégia Léxica: logos (padrão: logos)");
     println!("  --parser <ESTRATÉGIA> Estratégia Sintática: yacc, topdown (padrão: yacc)");
     println!("  --sema, --semantic    Estratégia Semântica: sema (padrão: default)");
     println!("  --gencode, --codegen  Estratégia de Geração de Código: llvm (padrão: llvm)");
@@ -36,7 +36,7 @@ fn main() {
         }
     }
 
-    let mut lexer_strategy = String::from("ply");
+    let mut lexer_strategy = String::from("logos");
     let mut _parser_strategy = String::from("yacc");
     let mut _sema_strategy = String::from("default");
     let mut _gencode_strategy = String::from("llvm");
