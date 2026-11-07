@@ -12,7 +12,6 @@ fn run_compiler_case(key_option: &str, input_file: &str) {
 
     let mut cmd = Command::new(bin);
     cmd.current_dir(&root);
-    cmd.arg("--lexer").arg("logos");
     if !key_option.is_empty() {
         cmd.arg(key_option);
     }

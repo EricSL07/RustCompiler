@@ -1,10 +1,9 @@
 use std::env;
 use std::fs;
 use std::path::Path;
-use std::process;
 
 use rust_tpp_compiler::myerror::MyError;
-use rust_tpp_compiler::tpplexer::get_lexer;
+use rust_tpp_compiler::tpplexer::{BaseLexer, LogosLexer};
 
 fn print_help() {
     println!("Compilador TPP em Rust [tppc]");
@@ -16,10 +15,6 @@ fn print_help() {
     println!();
     println!("Opções:");
     println!("  -h, --help            Exibe esta mensagem de ajuda e sai");
-    println!("  --lexer <ESTRATÉGIA>  Estratégia Léxica: logos (padrão: logos)");
-    println!("  --parser <ESTRATÉGIA> Estratégia Sintática: yacc, topdown (padrão: yacc)");
-    println!("  --sema, --semantic    Estratégia Semântica: sema (padrão: default)");
-    println!("  --gencode, --codegen  Estratégia de Geração de Código: llvm (padrão: llvm)");
     println!("  -k                    Imprimir apenas as chaves de Erro.");
 }
 
@@ -36,10 +31,6 @@ fn main() {
         }
     }
 
-    let mut lexer_strategy = String::from("logos");
-    let mut _parser_strategy = String::from("yacc");
-    let mut _sema_strategy = String::from("default");
-    let mut _gencode_strategy = String::from("llvm");
     let mut fonte: Option<String> = None;
 
     let ge = MyError::new("GlobalErrors");
@@ -50,54 +41,6 @@ fn main() {
         match arg.as_str() {
             "-k" => {
                 check_key = true;
-                i += 1;
-            }
-            "--lexer" => {
-                if i + 1 >= args.len() {
-                    println!(
-                        "{}",
-                        ge.new_error(check_key, "ERR-GLOB-USE", None, None, &[], &[])
-                    );
-                    return;
-                }
-                lexer_strategy = args[i + 1].clone();
-                i += 2;
-            }
-            "--parser" => {
-                if i + 1 >= args.len() {
-                    println!(
-                        "{}",
-                        ge.new_error(check_key, "ERR-GLOB-USE", None, None, &[], &[])
-                    );
-                    return;
-                }
-                _parser_strategy = args[i + 1].clone();
-                i += 2;
-            }
-            "--sema" | "--semantic" => {
-                if i + 1 >= args.len() {
-                    println!(
-                        "{}",
-                        ge.new_error(check_key, "ERR-GLOB-USE", None, None, &[], &[])
-                    );
-                    return;
-                }
-                _sema_strategy = args[i + 1].clone();
-                i += 2;
-            }
-            "--gencode" | "--codegen" => {
-                if i + 1 >= args.len() {
-                    println!(
-                        "{}",
-                        ge.new_error(check_key, "ERR-GLOB-USE", None, None, &[], &[])
-                    );
-                    return;
-                }
-                _gencode_strategy = args[i + 1].clone();
-                i += 2;
-            }
-            s if s.starts_with("--lexer=") => {
-                lexer_strategy = s.trim_start_matches("--lexer=").to_string();
                 i += 1;
             }
             s if s.starts_with('-') => {
@@ -147,13 +90,7 @@ fn main() {
     }
 
     // Fase 1: Análise Léxica
-    let mut lexer = match get_lexer(&lexer_strategy, check_key) {
-        Ok(l) => l,
-        Err(err) => {
-            eprintln!("{}", err);
-            process::exit(1);
-        }
-    };
+    let mut lexer = LogosLexer::new(check_key);
 
     let source_file = match fs::read_to_string(&fonte_path) {
         Ok(content) => content,
@@ -171,8 +108,4 @@ fn main() {
         println!("{}", token.token_type);
     }
 
-    // Esqueleto para as próximas fases do compilador:
-    // Fase 2: Análise Sintática (tppparser)
-    // Fase 3: Análise Semântica (tppsema)
-    // Fase 4: Geração de Código (tppcodegen)
 }

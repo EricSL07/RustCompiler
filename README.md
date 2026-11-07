@@ -1,6 +1,6 @@
 # RustCompiler — Compilador TPP em Rust
 
-Esqueleto completo do compilador para a linguagem **TPP** implementado em **Rust**, contendo a **1ª Fase (Análise Léxica)** construída com o crate **`logos`** (padrão do ecossistema Rust para geração de analisadores léxicos em tempo de compilação) e integrada com os **42 casos de teste do professor**.
+Compilador para a linguagem **TPP** implementado em **Rust**, contendo a **1ª Fase (Análise Léxica)** construída com o crate **`logos`** (padrão do ecossistema Rust para geração de analisadores léxicos em tempo de compilação) e integrada com os **42 casos de teste do professor**.
 
 ## Estrutura do Projeto
 
@@ -16,19 +16,12 @@ RustCompiler/
 │   ├── myerror.rs                          # Gerenciador de erros e leitura dos .properties
 │   ├── GlobalErrorMessages.properties      # Mensagens de erro globais
 │   ├── tpplexer/                           # Fase 1: Análise Léxica (baseada em Logos)
-│   │   ├── mod.rs                          # Factory get_lexer e exportações
+│   │   ├── mod.rs                          # Organização e exportações do lexer
 │   │   ├── base.rs                         # Trait BaseLexer, struct Token e utilitários
 │   │   ├── tokens.rs                       # Enum TokenKind com #[derive(Logos)] e regras léxicas
 │   │   ├── logos_lexer.rs                  # Implementação do LogosLexer (rastreamento de linha/coluna e erros)
 │   │   ├── log_error_lexer.rs              # Tratamento e formatação de erros léxicos
 │   │   └── LexerErrorMessages.properties   # Mensagens de erro léxicas
-│   ├── tppparser/                          # Fase 2: Análise Sintática (Esqueleto)
-│   │   ├── mod.rs                          # Trait BaseParser e SyntaxTree
-│   │   └── ParserMessages.properties       # Mensagens de erro sintáticas
-│   ├── tppsema/                            # Fase 3: Análise Semântica (Esqueleto)
-│   │   └── mod.rs                          # Esqueleto do SemanticAnalyzer
-│   └── tppcodegen/                         # Fase 4: Geração de Código (Esqueleto)
-│       └── mod.rs                          # Esqueleto do CodeGenerator
 └── tests/
     ├── tpplex_test.rs                      # Suíte automatizada com os 42 testes do professor
     ├── test_perf_large_tokens.rs           # Teste de performance (>36.000 tokens)
