@@ -405,10 +405,18 @@ A validação funcional foi conduzida utilizando os **42 casos de teste do profe
 
 O analisador `LogosLexer` obtém **100% de aprovação (42/42 testes aprovados)** em conformidade estrita com os arquivos `.lex.out` de referência, além de ser validado pelo teste de estresse ([`tests/test_perf_large_tokens.rs`]) com mais de **36.500 tokens**.
 
+O resultado obtido no benchmark de desempenho foi:
+```bash
+[PERFORMANCE] Lexer: logos | Tokens: 36500 | Tempo: 0.0180s | Vazão: 2022953 tok/s
+test test_large_token_sequence_performance ... ok
+```
+
 ## 7. Conclusão
 
-A implementação da fase de Análise Léxica do `RustCompiler` utilizando o crate `logos` demonstrou como o ecossistema moderno de Rust permite expressar a especificação léxica de maneira concisa, declarativa e segura em tipos. A geração de Autômatos Finitos Determinísticos em tempo de compilação via `#[derive(Logos)]` eliminou a necessidade de codificar transições manuais repetitivas, mantendo total compatibilidade com a especificação da linguagem TPP, suporte preciso a UTF-8 e aprovação integral nos 42 casos de teste de referência. Como analise de desempenho, foi comparado o tempo de execução da analise lexica usando o exemplo em python e o tempo de execução do analisador lexica em Rust, e o resultado foi que o analisador lexica em Rust foi significativamente mais rápido, com uma redução de tempo de execução de aproximadamente 
- Como trabalho futuro, o fluxo de tokens produzido pelo `LogosLexer` poderá servir de entrada para as próximas fases do compilador, começando pela Análise Sintática.
+A implementação da fase de Análise Léxica do `RustCompiler` utilizando o crate `logos` demonstrou como o ecossistema moderno de Rust permite expressar a especificação léxica de maneira concisa, declarativa e segura em tipos. A geração de Autômatos Finitos Determinísticos em tempo de compilação via `#[derive(Logos)]` eliminou a necessidade de codificar transições manuais repetitivas, mantendo total compatibilidade com a especificação da linguagem TPP, suporte preciso a UTF-8 e aprovação integral nos 42 casos de teste de referência.
+
+Como analise de desempenho, foi comparado o tempo de execução da analise lexica usando o exemplo em python e o tempo de execução do analisador lexica em Rust, e o resultado foi que o analisador lexica em Rust teve uma geração de tokens 3,63x mais rapida que o analisador lexica em Python, demonstrando a eficiência do compilador Rust e do crate `logos` para processamento de grandes volumes de código-fonte.
+Como trabalho futuro, o fluxo de tokens produzido pelo `LogosLexer` poderá servir de entrada para as próximas fases do compilador, começando pela Análise Sintática.
 
 ---
 
@@ -417,3 +425,23 @@ A implementação da fase de Análise Léxica do `RustCompiler` utilizando o cra
 - **AHO, Alfred V.; LAM, Monica S.; SETHI, Ravi; ULLMAN, Jeffrey D.** *Compiladores: princípios, técnicas e ferramentas*. 2. ed. São Paulo: Pearson Addison-Wesley, 2008.
 - **COOPER, Keith D.; TORCZON, Linda.** *Construindo compiladores*. Rio de Janeiro: Elsevier/Campus, 2014.
 - **LOUDEN, Kenneth C.** *Compiladores: princípios e práticas*. São Paulo: Thomson, 2004.
+
+---
+
+## Lista de Tarefas Pendentes
+
+- [ ] Criar uma seção explicando o arquivo [`src/tpplexer/base.rs`], incluindo:
+  - [ ] A estrutura `Token` e seus campos (`token_type`, `value`, `lineno` e `lexpos`).
+  - [ ] O construtor `Token::new`.
+  - [ ] A trait `BaseLexer` e os métodos `input`, `token` e `tokenize`.
+  - [ ] As funções `get_column_str` e `normalize_source_str`.
+  - [ ] A função `match_scientific_notation_str`.
+- [ ] Explicar o papel do arquivo [`src/tpplexer/log_error_lexer.rs`] e seu fluxo de comunicação com `MyError` e os arquivos `.properties`.
+- [ ] Descrever o fluxo completo da CLI em [`src/main.rs`], desde a leitura dos argumentos até a impressão dos tokens.
+- [ ] Explicar que a opção `--lexer` foi removida e que a implementação utiliza diretamente `LogosLexer`.
+- [ ] Explicar o tratamento manual de números em notação científica com sinal, como `+1.5e2` e `-1.5e2`.
+- [ ] Diferenciar `lexpos` da coluna usada nos diagnósticos de erro.
+- [ ] Explicar com mais precisão a recuperação de caracteres inválidos e o encerramento após comentário não fechado.
+- [ ] Revisar as afirmações sobre os detalhes internos de implementação do `logos` e adicionar referências oficiais, quando necessário.
+- [ ] Adicionar uma referência bibliográfica oficial do crate `logos`.
+- [ ] Documentar melhor a comparação de desempenho com Python, incluindo código, entrada, ambiente, quantidade de execuções e tabela de resultados; ou remover a afirmação de desempenho caso esses dados não estejam disponíveis.
