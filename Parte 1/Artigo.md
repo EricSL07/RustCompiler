@@ -137,6 +137,8 @@ flowchart TD
     LogosLex --> LogErr["LogErrorLexer (log_error_lexer.rs)"]
 ```
 
+Explicando de forma sucinta o fluxograma acima, o nosso arquivo principal (`src/main.rs`) lê os argumentos da linha de comando, carrega o arquivo de entrada e invoca o `LogosLexer` para gerar a sequência de tokens. O `LogosLexer` utiliza o enum `TokenKind` para identificar cada token, enquanto o módulo `myerror.rs` formata e imprime mensagens de erro padronizadas. Já o arquivo `log_error_lexer.rs` contém a implementação de `LogErrorLexer`, que encapsula a lógica de emissão de erros léxicos, incluindo a leitura dos arquivos `.properties` para mensagens localizadas e o `base.rs` define a trait `BaseLexer` com métodos genéricos de varredura, como `input`, `token` e `tokenize`.
+
 ### 4.1. Definição Declarativa dos Tokens com `#[derive(Logos)]`
 
 No arquivo [`src/tpplexer/tokens.rs`], o enum `TokenKind` utiliza a macro procedural `#[derive(Logos)]` para declarar todas as palavras reservadas, operadores e expressões regulares da linguagem TPP, além de `#[regex]` para identificadores, literais numéricos, caractere inválido e outros padrões dinâmicos que não emitem *tokens*. A prioridade de cada padrão é explicitamente definida para garantir a correta desambiguação de tokens com prefixos comuns.
