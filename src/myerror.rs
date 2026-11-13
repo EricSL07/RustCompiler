@@ -4,6 +4,7 @@ use std::path::Path;
 
 const DEFAULT_GLOBAL_ERRORS: &str = include_str!("GlobalErrorMessages.properties");
 const DEFAULT_LEXER_ERRORS: &str = include_str!("tpplexer/LexerErrorMessages.properties");
+const DEFAULT_PARSER_ERRORS: &str = include_str!("tppparser/ParserErrorMessages.properties");
 
 /// Gerenciador padronizado de erros para todas as fases do compilador TPP.
 /// Carrega mensagens a partir de arquivos `.properties` (estilo INI) e formata
@@ -24,6 +25,7 @@ impl MyError {
         // Carrega os defaults embutidos em tempo de compilação
         instance.parse_ini(DEFAULT_GLOBAL_ERRORS);
         instance.parse_ini(DEFAULT_LEXER_ERRORS);
+        instance.parse_ini(DEFAULT_PARSER_ERRORS);
 
         // Tenta sobrepor com arquivos do sistema de arquivos, se presentes
         let error_files = [
@@ -31,6 +33,8 @@ impl MyError {
             "src/GlobalErrorMessages.properties",
             "tpplexer/LexerErrorMessages.properties",
             "src/tpplexer/LexerErrorMessages.properties",
+            "tppparser/ParserErrorMessages.properties",
+            "src/tppparser/ParserErrorMessages.properties",
         ];
 
         for file_path in error_files {

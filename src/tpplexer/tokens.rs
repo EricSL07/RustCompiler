@@ -28,6 +28,8 @@ pub enum TokenKind {
     Senao,
     #[token("fim")]
     Fim,
+    #[token("enquanto")]
+    Enquanto,
     #[token("repita")]
     Repita,
     #[token("flutuante")]
@@ -119,6 +121,7 @@ impl TokenKind {
             Self::Flutuante => Some("FLUTUANTE"),
             Self::Retorna => Some("RETORNA"),
             Self::Ate => Some("ATE"),
+            Self::Enquanto => Some("ENQUANTO"),
             Self::Leia => Some("LEIA"),
             Self::Escreva => Some("ESCREVA"),
             Self::Inteiro => Some("INTEIRO"),

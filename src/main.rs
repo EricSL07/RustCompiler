@@ -4,6 +4,7 @@ use std::path::Path;
 
 use rust_tpp_compiler::myerror::MyError;
 use rust_tpp_compiler::tpplexer::{BaseLexer, LogosLexer};
+use rust_tpp_compiler::tppparser::parser::Parser;
 
 fn print_help() {
     println!("Compilador TPP em Rust [tppc]");
@@ -16,6 +17,10 @@ fn print_help() {
     println!("Opções:");
     println!("  -h, --help            Exibe esta mensagem de ajuda e sai");
     println!("  -k                    Imprimir apenas as chaves de Erro.");
+    print!("  -t                     Gera a árvore de sintaxe abstrata (AST) e a imprime no console.\n");
+    print!("  --parser on|off        Habilitar ou desabilitar a fase de análise sintática (padrão: on)\n");
+    print!("  --lexer on|off         Habilitar ou desabilitar a fase de análise léxica (padrão: on)\n");
+    println!();
 }
 
 fn main() {
@@ -31,6 +36,9 @@ fn main() {
         }
     }
 
+    let mut run_parser = false;
+    let mut run_lexer = true;
+
     let mut fonte: Option<String> = None;
 
     let ge = MyError::new("GlobalErrors");
@@ -41,6 +49,58 @@ fn main() {
         match arg.as_str() {
             "-k" => {
                 check_key = true;
+                i += 1;
+            }
+            "-t" => {
+                run_parser = true;
+                i += 1;
+            }
+            "--parser" => {
+                i += 1;
+                if i < args.len() {
+                    let parser_arg = &args[i];
+                    if parser_arg == "on" || parser_arg == "yacc" {
+                        run_parser = true;
+                    } else if parser_arg == "off" {
+                        run_parser = false;
+                    } else {
+                        println!(
+                            "{}",
+                            ge.new_error(check_key, "ERR-GLOB-USE", None, None, &[], &[])
+                        );
+                        return;
+                    }
+                } else {
+                    println!(
+                        "{}",
+                        ge.new_error(check_key, "ERR-GLOB-USE", None, None, &[], &[])
+                    );
+                    return;
+                }
+                i += 1;
+            }
+            "--lexer" => {
+                i += 1;
+                if i < args.len() {
+                    let lexer_arg = &args[i];
+                    if lexer_arg == "on" {
+                        run_lexer = true;
+                    } else if lexer_arg == "off" {
+                        run_lexer = false;
+                    } else {
+                        println!(
+                            "{}",
+                            ge.new_error(check_key, "ERR-GLOB-USE", None, None, &[], &[])
+                        );
+                        return;
+                    }
+                } else {
+                    println!(
+                        "{}",
+                        ge.new_error(check_key, "ERR-GLOB-USE", None, None, &[], &[])
+                    );
+                    return;
+                }
                 i += 1;
             }
             s if s.starts_with('-') => {
@@ -103,9 +163,26 @@ fn main() {
         }
     };
 
-    lexer.input(&source_file);
-    while let Some(token) = lexer.token() {
-        println!("{}", token.token_type);
+    // Fase 2: Análise Sintática
+    if !run_parser {
+        if run_lexer {
+            lexer.input(&source_file);
+            while let Some(token) = lexer.token() {
+                println!("{}", token.token_type);
+            }
+        }
+        return;
     }
+
+    let tokens = lexer.tokenize(&source_file);
+    let mut parser = Parser::new(tokens, check_key);
+    match parser.parse() {
+        Ok(_ast) => {
+            let pe = MyError::new("ParserErrors");
+            println!("{}", pe.new_error(check_key, "WAR-SYN-ANA-SUCCESS", None, None, &[], &[]));
+        }
+        Err(err) => println!("{}", err),
+    }
+
 
 }
