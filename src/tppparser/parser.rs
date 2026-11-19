@@ -176,6 +176,7 @@ impl Parser {
 
     /// `declaracao_variaveis ::= tipo DOIS_PONTOS lista_variaveis [ATRIBUICAO (atribuicao_encadeada | lista_expressoes)]`
     fn parse_declaracao_variaveis(&mut self) -> Result<AstNode, String> {
+        let (line, col) = (self.current_token().unwrap().lineno, self.current_token().unwrap().lexpos);
         let tipo = self.parse_tipo()?;
         self.expect(TokenKind::DoisPontos, "ERR-SYN-IRRECUPERAVEL")?;
         let vars = self.parse_lista_variaveis()?;
@@ -185,6 +186,7 @@ impl Parser {
             let rhs = self.parse_rhs_atribuicao()?;
             children.push(rhs);
         }
+
         Ok(AstNode::with_position("DeclaracaoVariaveis", line, col, children))
     }
 
