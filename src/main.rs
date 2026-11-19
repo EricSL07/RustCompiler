@@ -38,6 +38,7 @@ fn main() {
 
     let mut run_parser = false;
     let mut run_lexer = true;
+    let mut gen_tree = false;
 
     let mut fonte: Option<String> = None;
 
@@ -53,6 +54,7 @@ fn main() {
             }
             "-t" => {
                 run_parser = true;
+                gen_tree = true;
                 i += 1;
             }
             "--parser" => {
@@ -176,12 +178,40 @@ fn main() {
 
     let tokens = lexer.tokenize(&source_file);
     let mut parser = Parser::new(tokens, check_key);
+    let pe = MyError::new("ParserErrors");
     match parser.parse() {
-        Ok(_ast) => {
-            let pe = MyError::new("ParserErrors");
-            println!("{}", pe.new_error(check_key, "WAR-SYN-ANA-SUCCESS", None, None, &[], &[]));
+        Ok(ast) => {
+            if gen_tree {
+                println!(
+                    "{}",
+                    pe.new_error(check_key, "WAR-SYN-GEN-SYNTAX-TREE", None, None, &[], &[])
+                );
+                let dot_path = format!("{}.ast.dot", fonte_path);
+                let ascii_path = format!("{}.ascii_tree.txt", fonte_path);
+                let _ = fs::write(&dot_path, ast.to_dot());
+                let _ = fs::write(&ascii_path, ast.to_ascii_tree());
+                println!(
+                    "{}",
+                    pe.new_error(check_key, "WAR-SYN-OUTPUT-FILE", None, None, &[], &[])
+                );
+                if !check_key {
+                    println!("{}", ast.to_ascii_tree());
+                }
+            }
+            println!(
+                "{}",
+                pe.new_error(check_key, "WAR-SYN-ANA-SUCCESS", None, None, &[], &[])
+            );
         }
-        Err(err) => println!("{}", err),
+        Err(err) => {
+            println!("{}", err);
+            if gen_tree {
+                println!(
+                    "{}",
+                    pe.new_error(check_key, "WAR-SYN-NOT-GEN-SYNTAX-TREE", None, None, &[], &[])
+                );
+            }
+        }
     }
 
 
