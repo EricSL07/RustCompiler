@@ -19,16 +19,6 @@ impl AstNode {
         }
     }
 
-    // Cria um novo nó da AST com o tipo especificado e filhos fornecidos
-    pub fn with_children(label: impl Into<String>, children: Vec<AstNode>) -> Self {
-        Self {
-            node_type: label.into(),
-            column: 0,
-            line: 0,
-            children,
-        }
-    }
-
     pub fn with_position(label: impl Into<String>, line: usize, column: usize, children: Vec<AstNode>) -> Self {
         Self {
             node_type: label.into(),

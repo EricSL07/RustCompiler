@@ -190,7 +190,7 @@ pub struct AstNode {
 }
 ```
 
-Cada nó armazena seu rótulo sintático (`node_type`, como `"Programa"`, `"DeclaracaoFuncao"`, `"ExpressionAdditive"` ou `"Literal: ..."`) e um vetor recursivo de filhos (`children`). A estrutura disponibiliza dois construtores: `AstNode::new(label)` para nós folha e `AstNode::with_children(label, children)` para nós internos.
+Cada nó armazena seu rótulo sintático (`node_type`, como `"Programa"`, `"DeclaracaoFuncao"`, `"ExpressionAdditive"` ou `"Literal: ..."`) e um vetor recursivo de filhos (`children`). A estrutura disponibiliza dois construtores: `AstNode::new(label)` para nós folha e `AstNode::with_position(label, line, column, children)` para nós com filhos e posição de origem.
 
 Além do armazenamento em memória, `ast.rs` implementa duas rotinas de exportação utilizadas pela flag `-t`:
 
@@ -254,5 +254,4 @@ Nos casos inválidos da bateria `tests/syn-tests/`, o parser identifica corretam
 ## Conclusão
 
 A implementação manual do analisador sintático descendente recursivo em Rust permitiu cobrir integralmente as regras da gramática da linguagem TPP e suas extensões de atribuição e retorno múltiplos. A separação clara entre a representação da árvore (`ast.rs`), a lógica de parsing (`parser.rs`) e a orquestração via CLI (`main.rs`) manteve o compilador modular, tipado e preparado para a próxima etapa do projeto: a Análise Semântica.
-
 

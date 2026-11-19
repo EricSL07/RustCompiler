@@ -11,7 +11,7 @@ pub struct VarSymbol {
     pub var_type: TppType,
     pub dimensions: Vec<Option<usize>>,
     pub scope: String,
-    pub Initialized: bool,
+    pub initialized: bool,
     pub used: bool,
     pub line: usize,
     pub column: usize,

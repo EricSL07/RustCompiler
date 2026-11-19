@@ -12,6 +12,14 @@ pub struct Parser {
 }
 
 impl Parser {
+    fn node_from_children(label: impl Into<String>, children: Vec<AstNode>) -> AstNode {
+        let (line, column) = children
+            .first()
+            .map(|child| (child.line, child.column))
+            .unwrap_or((0, 0));
+        AstNode::with_position(label, line, column, children)
+    }
+
     /// Cria uma nova instância do parser com os tokens fornecidos.
     pub fn new(tokens: Vec<Token>, check_key: bool) -> Self {
         Self {
@@ -134,7 +142,7 @@ impl Parser {
         while self.current_token().is_some() {
             decls.push(self.parse_declaracao()?);
         }
-        Ok(AstNode::with_children("Programa", decls))
+        Ok(Self::node_from_children("Programa", decls))
     }
 
     /// `declaracao ::= declaracao_variaveis | inicializacao_variaveis | declaracao_funcao`
@@ -202,7 +210,7 @@ impl Parser {
 
         self.expect(TokenKind::Atribuicao, "ERR-SYN-IRRECUPERAVEL")?;
         let exprs = self.parse_lista_expressoes()?;
-        Ok(AstNode::with_children(
+        Ok(Self::node_from_children(
             "InicializacaoVariaveis",
             vec![alvos, exprs],
         ))
@@ -213,7 +221,7 @@ impl Parser {
         while self.match_token(TokenKind::Virgula).is_some() {
             vars.push(self.parse_var()?);
         }
-        Ok(AstNode::with_children("ListaVariaveis", vars))
+        Ok(Self::node_from_children("ListaVariaveis", vars))
     }
 
     fn parse_lista_alvos(&mut self) -> Result<AstNode, String> {
@@ -221,7 +229,7 @@ impl Parser {
         while self.match_token(TokenKind::Virgula).is_some() {
             alvos.push(self.parse_var()?);
         }
-        Ok(AstNode::with_children("ListaAlvos", alvos))
+        Ok(Self::node_from_children("ListaAlvos", alvos))
     }
 
     /// `var ::= ID | ID indice`
@@ -232,7 +240,7 @@ impl Parser {
         while self.match_token(TokenKind::AbreColchete).is_some() {
             let expr = self.parse_expressao()?;
             self.expect(TokenKind::FechaColchete, "ERR-SYN-INDICE")?;
-            children.push(AstNode::with_children("Indice", vec![expr]));
+            children.push(Self::node_from_children("Indice", vec![expr]));
         }
 
         Ok(AstNode::with_position("Var", id_tok.lineno, id_tok.lexpos, children))
@@ -251,7 +259,7 @@ impl Parser {
             children.push(self.parse_tipos_retorno()?);
         }
         children.push(self.parse_cabecalho()?);
-        Ok(AstNode::with_children("DeclaracaoFuncao", children))
+        Ok(Self::node_from_children("DeclaracaoFuncao", children))
     }
 
     /// `tipos_retorno ::= ABRE_PARENTESE lista_tipos FECHA_PARENTESE`
@@ -262,7 +270,7 @@ impl Parser {
             tipos.push(self.parse_tipo()?);
         }
         self.expect(TokenKind::FechaParentese, "ERR-SYN-CABECALHO")?;
-        Ok(AstNode::with_children("TiposRetorno", tipos))
+        Ok(Self::node_from_children("TiposRetorno", tipos))
     }
 
     /// `cabecalho ::= ID ABRE_PARENTESE lista_parametros FECHA_PARENTESE bloco FIM`
@@ -274,8 +282,10 @@ impl Parser {
         let bloco = self.parse_bloco()?;
         self.expect(TokenKind::Fim, "ERR-SYN-CABECALHO")?;
 
-        Ok(AstNode::with_children(
+        Ok(AstNode::with_position(
             "Cabecalho",
+            id_tok.lineno,
+            id_tok.lexpos,
             vec![AstNode::new(format!("ID: {}", id_tok.value)), params, bloco],
         ))
     }
@@ -289,7 +299,7 @@ impl Parser {
                 params.push(self.parse_parametro()?);
             }
         }
-        Ok(AstNode::with_children("ListaParametros", params))
+        Ok(Self::node_from_children("ListaParametros", params))
     }
 
     /// `parametro ::= tipo DOIS_PONTOS ID (ABRE_COLCHETE FECHA_COLCHETE)*`
@@ -310,8 +320,10 @@ impl Parser {
             format!("ID: {}", id_tok.value)
         };
 
-        Ok(AstNode::with_children(
+        Ok(AstNode::with_position(
             "Parametro",
+            id_tok.lineno,
+            id_tok.lexpos,
             vec![tipo, AstNode::new(label)],
         ))
     }
@@ -330,7 +342,7 @@ impl Parser {
         {
             acoes.push(self.parse_acao()?);
         }
-        Ok(AstNode::with_children("Bloco", acoes))
+        Ok(Self::node_from_children("Bloco", acoes))
     }
 
     /// `acao ::= expressao | atribuicao | declaracao_variaveis | se | repita | leia | escreva | retorna`
@@ -351,7 +363,7 @@ impl Parser {
             let lhs = self.parse_lista_expressoes()?;
             if self.match_token(TokenKind::Atribuicao).is_some() {
                 let rhs = self.parse_rhs_atribuicao()?;
-                Ok(AstNode::with_children("Atribuicao", vec![lhs, rhs]))
+                Ok(Self::node_from_children("Atribuicao", vec![lhs, rhs]))
             } else {
                 Ok(lhs)
             }
@@ -363,7 +375,7 @@ impl Parser {
         let exprs = self.parse_lista_expressoes()?;
         if self.match_token(TokenKind::Atribuicao).is_some() {
             let rest = self.parse_rhs_atribuicao()?;
-            Ok(AstNode::with_children("AtribuicaoEncadeada", vec![exprs, rest]))
+            Ok(Self::node_from_children("AtribuicaoEncadeada", vec![exprs, rest]))
         } else {
             Ok(exprs)
         }
@@ -371,7 +383,10 @@ impl Parser {
 
     /// `se ::= SE expressao ENTAO bloco (SENAO bloco)? FIM`
     fn parse_se(&mut self) -> Result<AstNode, String> {
-        self.expect(TokenKind::Se, "ERR-SYN-IRRECUPERAVEL")?;
+        let (line, column) = {
+            let token = self.expect(TokenKind::Se, "ERR-SYN-IRRECUPERAVEL")?;
+            (token.lineno, token.lexpos)
+        };
         let cond = self.parse_expressao()?;
         self.expect(TokenKind::Entao, "ERR-SYN-IRRECUPERAVEL")?;
         let then_block = self.parse_bloco()?;
@@ -382,47 +397,59 @@ impl Parser {
         }
         self.expect(TokenKind::Fim, "ERR-SYN-IRRECUPERAVEL")?;
 
-        Ok(AstNode::with_children("Se", children))
+        Ok(AstNode::with_position("Se", line, column, children))
     }
 
     /// `repita ::= REPITA bloco ATE expressao`
     fn parse_repita(&mut self) -> Result<AstNode, String> {
-        self.expect(TokenKind::Repita, "ERR-SYN-IRRECUPERAVEL")?;
+        let (line, column) = {
+            let token = self.expect(TokenKind::Repita, "ERR-SYN-IRRECUPERAVEL")?;
+            (token.lineno, token.lexpos)
+        };
         let bloco = self.parse_bloco()?;
         self.expect(TokenKind::Ate, "ERR-SYN-IRRECUPERAVEL")?;
         let cond = self.parse_expressao()?;
 
-        Ok(AstNode::with_children("Repita", vec![bloco, cond]))
+        Ok(AstNode::with_position("Repita", line, column, vec![bloco, cond]))
     }
 
     /// `leia ::= LEIA ABRE_PARENTESE var FECHA_PARENTESE`
     fn parse_leia(&mut self) -> Result<AstNode, String> {
-        self.expect(TokenKind::Leia, "ERR-SYN-LEIA")?;
+        let (line, column) = {
+            let token = self.expect(TokenKind::Leia, "ERR-SYN-LEIA")?;
+            (token.lineno, token.lexpos)
+        };
         self.expect(TokenKind::AbreParentese, "ERR-SYN-LEIA")?;
         let var = self.parse_var().map_err(|_| self.format_error("ERR-SYN-LEIA"))?;
         self.expect(TokenKind::FechaParentese, "ERR-SYN-LEIA")?;
 
-        Ok(AstNode::with_children("Leia", vec![var]))
+        Ok(AstNode::with_position("Leia", line, column, vec![var]))
     }
 
     /// `escreva ::= ESCREVA ABRE_PARENTESE expressao FECHA_PARENTESE`
     fn parse_escreva(&mut self) -> Result<AstNode, String> {
-        self.expect(TokenKind::Escreva, "ERR-SYN-IRRECUPERAVEL")?;
+        let (line, column) = {
+            let token = self.expect(TokenKind::Escreva, "ERR-SYN-IRRECUPERAVEL")?;
+            (token.lineno, token.lexpos)
+        };
         self.expect(TokenKind::AbreParentese, "ERR-SYN-IRRECUPERAVEL")?;
         let expr = self.parse_expressao()?;
         self.expect(TokenKind::FechaParentese, "ERR-SYN-IRRECUPERAVEL")?;
 
-        Ok(AstNode::with_children("Escreva", vec![expr]))
+        Ok(AstNode::with_position("Escreva", line, column, vec![expr]))
     }
 
     /// `retorna ::= RETORNA ABRE_PARENTESE lista_expressoes FECHA_PARENTESE`
     fn parse_retorna(&mut self) -> Result<AstNode, String> {
-        self.expect(TokenKind::Retorna, "ERR-SYN-IRRECUPERAVEL")?;
+        let (line, column) = {
+            let token = self.expect(TokenKind::Retorna, "ERR-SYN-IRRECUPERAVEL")?;
+            (token.lineno, token.lexpos)
+        };
         self.expect(TokenKind::AbreParentese, "ERR-SYN-IRRECUPERAVEL")?;
         let exprs = self.parse_lista_expressoes()?;
         self.expect(TokenKind::FechaParentese, "ERR-SYN-IRRECUPERAVEL")?;
 
-        Ok(AstNode::with_children("Retorna", vec![exprs]))
+        Ok(AstNode::with_position("Retorna", line, column, vec![exprs]))
     }
 
     // -------------------------------------------------------------------------
@@ -438,7 +465,7 @@ impl Parser {
         while self.match_token(TokenKind::Virgula).is_some() {
             exprs.push(self.parse_expressao()?);
         }
-        Ok(AstNode::with_children("ListaExpressoes", exprs))
+        Ok(Self::node_from_children("ListaExpressoes", exprs))
     }
 
     fn parse_expressao(&mut self) -> Result<AstNode, String> {
@@ -454,8 +481,10 @@ impl Parser {
             self.advance();
 
             let right = self.parse_expressao_simples()?;
-            left = AstNode::with_children(
+            left = AstNode::with_position(
                 "ExpressionLogic",
+                operator.lineno,
+                operator.lexpos,
                 vec![
                     AstNode::new(format!("Operator: {:?}", operator)),
                     left,
@@ -481,8 +510,10 @@ impl Parser {
             self.advance();
 
             let right = self.parse_expression_additive()?;
-            left = AstNode::with_children(
+            left = AstNode::with_position(
                 "ExpressionRelational",
+                operator.lineno,
+                operator.lexpos,
                 vec![
                     AstNode::new(format!("Operator: {:?}", operator)),
                     left,
@@ -502,8 +533,10 @@ impl Parser {
             self.advance();
 
             let right = self.parse_expressao_multiplicativa()?;
-            left = AstNode::with_children(
+            left = AstNode::with_position(
                 "ExpressionAdditive",
+                operator.lineno,
+                operator.lexpos,
                 vec![
                     AstNode::new(format!("Operator: {:?}", operator)),
                     left,
@@ -523,8 +556,10 @@ impl Parser {
             self.advance();
 
             let right = self.parse_expressao_unaria()?;
-            left = AstNode::with_children(
+            left = AstNode::with_position(
                 "ExpressionMultiplicative",
+                operator.lineno,
+                operator.lexpos,
                 vec![
                     AstNode::new(format!("Operator: {:?}", operator)),
                     left,
@@ -544,8 +579,10 @@ impl Parser {
             let operator = self.current_token().unwrap().clone();
             self.advance();
             let operand = self.parse_expressao_unaria()?;
-            Ok(AstNode::with_children(
+            Ok(AstNode::with_position(
                 "ExpressionUnary",
+                operator.lineno,
+                operator.lexpos,
                 vec![
                     AstNode::new(format!("Operator: {:?}", operator)),
                     operand,
@@ -573,6 +610,8 @@ impl Parser {
                     }
                 }
                 "ABRE_PARENTESE" => {
+                    let line = token.lineno;
+                    let column = token.lexpos;
                     self.advance(); // Consome '('
                     let first = self.parse_expressao()?;
                     if self.check(TokenKind::Virgula) {
@@ -581,7 +620,7 @@ impl Parser {
                             elems.push(self.parse_expressao()?);
                         }
                         self.expect(TokenKind::FechaParentese, "ERR-SYN-IRRECUPERAVEL")?;
-                        Ok(AstNode::with_children("Tupla", elems))
+                        Ok(AstNode::with_position("Tupla", line, column, elems))
                     } else {
                         self.expect(TokenKind::FechaParentese, "ERR-SYN-IRRECUPERAVEL")?;
                         Ok(first)
@@ -608,11 +647,13 @@ impl Parser {
         }
         self.expect(TokenKind::FechaParentese, "ERR-SYN-LISTA-ARGUMENTOS")?;
 
-        Ok(AstNode::with_children(
+        Ok(AstNode::with_position(
             "ChamadaFuncao",
+            id_tok.lineno,
+            id_tok.lexpos,
             vec![
                 AstNode::new(format!("ID: {}", id_tok.value)),
-                AstNode::with_children("ListaArgumentos", args),
+                Self::node_from_children("ListaArgumentos", args),
             ],
         ))
     }
