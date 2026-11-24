@@ -1,3 +1,7 @@
+use crate::tppparser::ast::AstNode;
+use crate::tppsemantic::sema::SemaContext;
+use crate::tppsemantic::symbol_table::SymbolTable;
+
 pub fn verificar(ast: &AstNode, table: &mut SymbolTable, sema: &mut SemaContext) {
     if !table.functions.contains_key("principal") {
         sema.emit("ERR-SEM-MAIN-NOT-DECL", &[], ast.line, ast.column);

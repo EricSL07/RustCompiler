@@ -5,6 +5,7 @@ use std::path::Path;
 use rust_tpp_compiler::myerror::MyError;
 use rust_tpp_compiler::tpplexer::{BaseLexer, LogosLexer};
 use rust_tpp_compiler::tppparser::parser::Parser;
+use rust_tpp_compiler::tppsemantic::sema;
 
 fn print_help() {
     println!("Compilador TPP em Rust [tppc]");
@@ -20,6 +21,7 @@ fn print_help() {
     print!("  -t                     Gera a árvore de sintaxe abstrata (AST) e a imprime no console.\n");
     print!("  --parser on|off        Habilitar ou desabilitar a fase de análise sintática (padrão: on)\n");
     print!("  --lexer on|off         Habilitar ou desabilitar a fase de análise léxica (padrão: on)\n");
+    print!("  --sema on|off          Habilitar ou desabilitar a fase de análise semântica (padrão: off)\n");
     println!();
 }
 
@@ -38,6 +40,7 @@ fn main() {
 
     let mut run_parser = false;
     let mut run_lexer = true;
+    let mut run_sema = false;
     let mut gen_tree = false;
 
     let mut fonte: Option<String> = None;
@@ -105,6 +108,31 @@ fn main() {
                 }
                 i += 1;
             }
+            "--sema" => {
+                i += 1;
+                if i < args.len() {
+                    let sema_arg = &args[i];
+                    if sema_arg == "on" {
+                        run_sema = true;
+                        run_parser = true;
+                    } else if sema_arg == "off" {
+                        run_sema = false;
+                    } else {
+                        println!(
+                            "{}",
+                            ge.new_error(check_key, "ERR-GLOB-USE", None, None, &[], &[])
+                        );
+                        return;
+                    }
+                } else {
+                    println!(
+                        "{}",
+                        ge.new_error(check_key, "ERR-GLOB-USE", None, None, &[], &[])
+                    );
+                    return;
+                }
+                i += 1;
+            }
             s if s.starts_with('-') => {
                 println!(
                     "{}",
@@ -140,6 +168,7 @@ fn main() {
             "{}",
             ge.new_error(check_key, "ERR-GLOB-NOT-TPP", None, None, &[], &[])
         );
+
         return;
     }
 
@@ -198,10 +227,26 @@ fn main() {
                     println!("{}", ast.to_ascii_tree());
                 }
             }
-            println!(
-                "{}",
-                pe.new_error(check_key, "WAR-SYN-ANA-SUCCESS", None, None, &[], &[])
-            );
+            if !run_sema {
+                println!(
+                    "{}",
+                    pe.new_error(check_key, "WAR-SYN-ANA-SUCCESS", None, None, &[], &[])
+                );
+            }
+
+            // Fase 3: Análise Semântica
+            if run_sema {
+                let sema_res = sema::analyze(&ast, check_key);
+                for msg in &sema_res.messages {
+                    println!("{}", msg);
+                }
+                if gen_tree && !sema_res.has_errors {
+                    let asto_dot = format!("{}.asto.dot", fonte_path);
+                    let asto_ascii = format!("{}.asto.ascii_tree.txt", fonte_path);
+                    let _ = fs::write(&asto_dot, sema_res.pruned_ast.to_dot());
+                    let _ = fs::write(&asto_ascii, sema_res.pruned_ast.to_ascii_tree());
+                }
+            }
         }
         Err(err) => {
             println!("{}", err);

@@ -87,10 +87,15 @@ impl BaseLexer for LogosLexer {
                     continue;
                 }
 
-                // 3. Comentários de bloco: { ... }
+                // 3. Comentários de bloco: { ... } ou {* ... *}
                 Ok(TokenKind::CommentStart) => {
                     let after_open = &remaining[span.end..];
-                    if let Some(close_offset) = after_open.find('}') {
+                    let close_pos = if after_open.starts_with('*') {
+                        after_open.find("*}").map(|p| p + 1)
+                    } else {
+                        after_open.find('}')
+                    };
+                    if let Some(close_offset) = close_pos {
                         let comment_body = &after_open[..close_offset];
                         for (idx, b) in comment_body.bytes().enumerate() {
                             if b == b'\n' {
