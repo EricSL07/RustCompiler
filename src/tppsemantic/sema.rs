@@ -124,6 +124,7 @@ pub fn build_pruned_ast(node: &AstNode, scope: &str, table: &SymbolTable) -> Ast
     AstNode::with_position(label, node.line, node.column, pruned_children)
 }
 
+// Encaminha cada nó da AST para a verificação semântica correspondente.
 fn visit_node(
     node: &AstNode,
     scope: &str,
@@ -166,6 +167,7 @@ fn visit_node(
     }
 }
 
+// Identifica expressões sem efeito quando aparecem como instruções.
 fn is_no_effect_expr(node: &AstNode) -> bool {
     matches!(
         node.node_type.as_str(),
@@ -195,6 +197,7 @@ fn handle_bloco(
     }
 }
 
+// Impede o uso de funções com múltiplos retornos dentro de expressões.
 fn check_multi_ret_in_operands(
     node: &AstNode,
     table: &SymbolTable,
@@ -258,6 +261,7 @@ fn extract_debug_field<'a>(debug_str: &'a str, field: &str) -> Option<&'a str> {
     Some(&debug_str[start..end])
 }
 
+// Avalia expressões constantes usadas na validação de dimensões e índices.
 fn eval_const_int(node: &AstNode) -> Option<isize> {
     if let Some((tok_type, val)) = parse_literal_info(node) {
         if tok_type == "NUM_INTEIRO" {
@@ -278,6 +282,7 @@ fn eval_const_int(node: &AstNode) -> Option<isize> {
     None
 }
 
+// Infere o tipo de uma expressão usando a AST e a tabela de símbolos.
 fn infer_expr_type(node: &AstNode, scope: &str, table: &SymbolTable) -> Option<TppType> {
     if let Some((tok_type, _)) = parse_literal_info(node) {
         return match tok_type {
@@ -330,6 +335,7 @@ fn infer_expr_type(node: &AstNode, scope: &str, table: &SymbolTable) -> Option<T
     }
 }
 
+// Detecta comparações relacionais encadeadas antes de visitar os operandos.
 fn handle_relational(
     node: &AstNode,
     scope: &str,
@@ -355,6 +361,7 @@ fn handle_relational(
     }
 }
 
+// Registra variáveis e valida as dimensões declaradas para arranjos.
 fn handle_var_decl(
     node: &AstNode,
     scope: &str,
@@ -439,6 +446,7 @@ fn handle_var_decl(
     }
 }
 
+// Verifica a inicialização e marca os alvos como escritos.
 fn handle_var_init(
     node: &AstNode,
     scope: &str,
@@ -475,6 +483,7 @@ fn handle_atribuicao(
     }
 }
 
+// Analisa os alvos e o valor final de uma atribuição encadeada.
 fn handle_atribuicao_encadeada(
     node: &AstNode,
     scope: &str,
@@ -531,6 +540,7 @@ fn count_values(node: &AstNode, table: &SymbolTable) -> usize {
     }
 }
 
+// Compara a quantidade de destinos com a quantidade de valores atribuídos.
 fn check_assignment_arity(
     lhs: &AstNode,
     rhs: &AstNode,
@@ -552,6 +562,7 @@ fn check_assignment_arity(
     }
 }
 
+// Percorre atribuições encadeadas até encontrar o valor final.
 fn unwrap_chained_rhs(mut node: Option<&AstNode>) -> Option<&AstNode> {
     while let Some(n) = node {
         if n.node_type == "AtribuicaoEncadeada" {
@@ -563,6 +574,7 @@ fn unwrap_chained_rhs(mut node: Option<&AstNode>) -> Option<&AstNode> {
     None
 }
 
+// Marca cada variável atribuída e verifica o tipo do valor correspondente.
 fn mark_targets_written(
     node: &AstNode,
     rhs: Option<&AstNode>,
@@ -601,6 +613,7 @@ fn mark_targets_written(
     }
 }
 
+// Emite avisos quando o tipo atribuído difere do tipo da variável.
 fn check_assignment_coercion(
     target_var: &AstNode,
     rhs_node: &AstNode,
@@ -683,6 +696,7 @@ fn handle_leia(node: &AstNode, scope: &str, table: &mut SymbolTable, sema: &mut 
     }
 }
 
+// Verifica o tipo e os limites dos índices do arranjo.
 fn check_array_access_indices(
     var_node: &AstNode,
     var_name: &str,
@@ -765,6 +779,7 @@ fn mark_var_written(
     }
 }
 
+// Registra o uso da variável e alerta se ela ainda não foi inicializada.
 fn handle_var_read(
     var_node: &AstNode,
     scope: &str,
@@ -792,6 +807,7 @@ fn handle_var_read(
     }
 }
 
+// Confere a quantidade e os tipos dos valores retornados pela função.
 fn handle_retorna(
     node: &AstNode,
     scope: &str,
@@ -857,6 +873,7 @@ fn handle_retorna(
     }
 }
 
+// Registra a função e verifica seus parâmetros e valores de retorno.
 fn handle_func_decl(node: &AstNode, table: &mut SymbolTable, sema: &mut SemaContext) {
     let mut return_types = Vec::new();
     let mut cabecalho_opt = None;
@@ -941,6 +958,7 @@ fn has_return(node: &AstNode) -> bool {
     node.children.iter().any(has_return)
 }
 
+// Converte um nó de parâmetro da AST em um símbolo de variável.
 fn parse_param(param_node: &AstNode, scope: &str) -> Option<VarSymbol> {
     let tipo_node = param_node.children.first()?;
     let var_type = parse_tipo_label(tipo_node)?;
@@ -968,6 +986,7 @@ fn parse_param(param_node: &AstNode, scope: &str) -> Option<VarSymbol> {
     })
 }
 
+// Valida a chamada em relação aos parâmetros declarados.
 fn handle_func_call(
     node: &AstNode,
     scope: &str,
@@ -1047,6 +1066,7 @@ fn handle_func_call(
     }
 }
 
+// Procura variáveis não utilizadas em todos os escopos.
 fn check_unused_variables(table: &SymbolTable, sema: &mut SemaContext) {
     for var in table.global_vars.values() {
         emit_unused_var(var, sema);
